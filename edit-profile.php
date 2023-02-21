@@ -1,49 +1,37 @@
-<?php
+<?php 
     require_once "include/header.php";
 ?>
-
 
 <?php  
 
 
-        // database connection
-        require_once "../connection.php";
-        
+$session_email =  $_SESSION["email_emp"];
+require_once "../connection.php";
+        $sql = "SELECT * FROM employee WHERE email= '$session_email' ";
+        $result = mysqli_query($conn , $sql);
+        $rows=mysqli_fetch_assoc($result);
+        $ename=$rows["ename"];
+        $addr=$rows["addresses"];
+        $mail=$rows["email"];
+        $gend=$rows["gender"];
 
-        $session_email =  $_SESSION["email"];
-    $sql = "SELECT * FROM admin WHERE email= '$session_email' ";
-    $result = mysqli_query($conn , $sql);
 
-    if(mysqli_num_rows($result) > 0 ){
-       
-        while($rows = mysqli_fetch_assoc($result) ){
-            $name = $rows["name"];
-            $email = $rows["email"];
-            $dob = $rows["dob"];
-            $gender = $rows["gender"];
-        }
-    }
-
-        $nameErr = $emailErr = "";
-        // $name = $email = $dob = $gender = "";
+        $nameErr = $emailErr = $addressErr = $genderErr= "";
+        $name = $address = $email = $gender = "";
+      
 
         if( $_SERVER["REQUEST_METHOD"] == "POST" ){
- 
+
             if( empty($_REQUEST["gender"]) ){
+                $genderErr = "<p style='color:red'> * Gender is required</p> ";
                 $gender ="";
             }else {
                 $gender = $_REQUEST["gender"];
             }
 
 
-            if( empty($_REQUEST["dob"]) ){
-                $dob = "";
-            }else {
-                $dob = $_REQUEST["dob"];
-            }
-
             if( empty($_REQUEST["name"]) ){
-                $nameErr = "<p style='color:red'> * Name is required</p>";
+                $nameErr = "<p style='color:red'> *  Name is required</p> ";
                 $name = "";
             }else {
                 $name = $_REQUEST["name"];
@@ -52,39 +40,40 @@
             if( empty($_REQUEST["email"]) ){
                 $emailErr = "<p style='color:red'> * Email is required</p> ";
                 $email = "";
-            }else{
+            }else {
                 $email = $_REQUEST["email"];
             }
 
+            if( empty($_REQUEST["addresses"]) ){
+                $addressErr = "<p style='color:red'> * Address is required</p> ";
+                $address = "";
+            }else {
+                $address = $_REQUEST["addresses"];
+            }
 
-            if( !empty($name) && !empty($email) ){
-            
-                // $sql_select_query = "SELECT email FROM admin WHERE email = '$email' ";
-                // $r = mysqli_query($conn , $sql_select_query);
 
-                // if( mysqli_num_rows($r) > 0 ){
-                //     $emailErr = "<p style='color:red'> * Email Already Register</p>";
-                // } else{
-
-                    $sql = "UPDATE admin SET name = '$name', email = '$email', dob = '$dob', gender= '$gender' WHERE email='$_SESSION[email]' ";
+            if( !empty($name) && !empty($email) && !empty($gender) && !empty($address) ){
+                
+                    $sql = "UPDATE `employee` SET `ename` = '$name' , `email` = '$email', `gender`='$gender' , `addresses`='$address' WHERE `employee`.`email` = '$session_email'";
                     $result = mysqli_query($conn , $sql);
                     if($result){
-                        $_SESSION['email']= $email;
                         echo "<script>
-                            $(document).ready( function(){
-                                $('#showModal').modal('show');
-                                $('#modalHead').hide();
-                                $('#linkBtn').attr('href', 'manage-admin.php');
-                                $('#linkBtn').text('View Admin');
-                                $('#addMsg').text('Profile Edited Successfully!!');
-                                $('#closeBtn').hide();
-                            })
-                        </script>
-                        ";
+                        $(document).ready( function(){
+                            $('#showModal').modal('show');
+                            $('#modalHead').hide();
+                            $('#linkBtn').attr('href', 'dashboard.php');
+                            $('#linkBtn').text('View Data');
+                            $('#addMsg').text('Profile Edited Successfully!');
+                            $('#closeBtn').text('Edit Again?');
+                        })
+                     </script>
+                     ";
                     }
+                    
                 }
 
-            }
+        }
+
 ?>
 
 
@@ -96,27 +85,21 @@
                 <div class="col-xl-6">
                     <div class="form-input-content">
                         <div class="card login-form mb-0">
-                            <div class="card-body pt-5 shadow">                       
-                                    <h4 class="text-center">Edit Your Profile</h4>
+                            <div class="card-body pt-4 shadow">                       
+                                    <h4 class="text-center">Edit Employee profile</h4>
                                 <form method="POST" action=" <?php htmlspecialchars($_SERVER['PHP_SELF']) ?>">
                             
                                 <div class="form-group">
                                     <label >Full Name :</label>
-                                    <input type="text" class="form-control" value="<?php echo $name; ?>"  name="name" >
+                                    <input type="text" class="form-control" value="<?php echo $ename; ?>"  name="name" >
                                    <?php echo $nameErr; ?>
                                 </div>
 
 
                                 <div class="form-group">
                                     <label >Email :</label>
-                                    <input type="email" class="form-control" value="<?php echo $email; ?>"  name="email" >     
+                                    <input type="email" class="form-control" value="<?php echo $mail; ?>"  name="email" >     
                                     <?php echo $emailErr; ?>
-                                </div>
-
-                                <div class="form-group">
-                                    <label >Date-of-Birth :</label>
-                                    <input type="date" class="form-control" value="<?php echo $dob; ?>" name="dob" >  
-                                   
                                 </div>
 
                                 <div class="form-group form-check form-check-inline">
@@ -134,14 +117,20 @@
                                     <input class="form-check-input" type="radio" name="gender" <?php if($gender == "Other" ){ echo "checked"; } ?>  value="Other">
                                     <label class="form-check-label" >Other</label>
                                 </div>
-
+                                
+                               <div class="form-group">
+                                    <label >Address :</label>
+                                    <input type="text" class="form-control" value="<?php echo $addr; ?>"  name="addresses" >     
+                                    <?php echo $addressErr; ?>
+                                </div>
+                                <br>
 
                                 <div class="btn-toolbar justify-content-between" role="toolbar" aria-label="Toolbar with button groups">
                                     <div class="btn-group">
                                    <input type="submit" value="Save Changes" class="btn btn-primary w-20 " name="save_changes" >        
                                     </div>
                                     <div class="input-group">
-                                         <a href="profile.php" class="btn btn-primary w-20">Close</a>
+                                         <a href="dashboard.php" class="btn btn-primary w-20">Close</a>
                                     </div>
                                 </div>
                                   </form>
@@ -153,7 +142,6 @@
         </div>
     </div>
 </div>
-
 <?php 
-    require_once "include/footer.php";
+require_once "include/footer.php";
 ?>

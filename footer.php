@@ -1,6 +1,5 @@
-<!--Footer start-->
 
-    <!-- Scripts-->
+    <!--Scripts-->
     <script src="../resorce/plugins/common/common.min.js"></script>
     <script src="../resorce/js/custom.min.js"></script>
     <script src="../resorce/js/settings.js"></script>

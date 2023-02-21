@@ -4,8 +4,8 @@ require_once "include/header.php";
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
 
 <?php 
-    $old_passErr = $new_passErr = $confirm_passErr = "";
-    $old_pass = $new_pass = $confirm_pass = "";
+      $old_passErr = $new_passErr = $confirm_passErr = "";
+     $old_pass = $new_pass = $confirm_pass = "";
 
     if($_SERVER["REQUEST_METHOD"] == "POST"){
 
@@ -31,13 +31,13 @@ require_once "include/header.php";
 
             require_once "../connection.php";
 
-            $check_old_pass = "SELECT password FROM admin WHERE email = '$_SESSION[email]' && password = '$old_pass' ";
+            $check_old_pass = "SELECT password FROM employee WHERE email = '$_SESSION[email_emp]' && password = '$old_pass' ";
             $result = mysqli_query($conn , $check_old_pass);
             if( mysqli_num_rows($result) > 0 ){
                
                 if( $new_pass === $confirm_pass ){
                   
-                    $change_pass_query = "UPDATE admin SET password = '$new_pass' WHERE email = '$_SESSION[email]' ";
+                    $change_pass_query = "UPDATE employee SET password = '$new_pass' WHERE email = '$_SESSION[email_emp]' ";
                     if (mysqli_query($conn , $change_pass_query) ){
                         session_unset();
                         session_destroy();
@@ -54,7 +54,7 @@ require_once "include/header.php";
                     }
                     
                 }else{
-                    $confirm_passErr = "<p style='color:red'>* Confirm did not matched new Password! </p>";
+                    $confirm_passErr = "<p style='color:red'>* Confirm password did not matched new Password! </p>";
                 }
 
             }else{
@@ -95,7 +95,7 @@ require_once "include/header.php";
                 
                                         <div class="btn-toolbar justify-content-between" role="toolbar" aria-label="Toolbar with button groups">
                                             <div class="btn-group">
-                                                <input type="submit" value="Save Changes" class="btn btn-primary w-20 " name="save_changes" >        
+                                        <input type="submit" value="Save Changes" class="btn btn-primary w-20 " name="save_changes" >        
                                             </div>
                                             <div class="input-group">
                                                 <a href="profile.php" class="btn btn-primary w-20">Close</a>

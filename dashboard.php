@@ -5,160 +5,178 @@ require_once "include/header.php";
 
         // database connection
         require_once "../connection.php";
+     
+        $i = 1;
+        
+        $total_accepted = $total_pending = $total_canceled = $total_applied = 0;
+        $leave = "SELECT * FROM emp_leave WHERE email = '$_SESSION[email_emp]' ";
+        $result = mysqli_query($conn , $leave);
 
-        $currentDay = date( 'Y-m-d', strtotime("today") );
-        $tomorrow = date( 'Y-m-d', strtotime("+1 day") );
+        if(mysqli_num_rows($result) > 0 ){
 
-         $today_leave = 0;
-         $tomorrow_leave = 0;
-         $this_week = 0;
-         $next_week = 0;
-            $i = 1;
-        // total department
-         $select_dept = "SELECT * FROM department";
-         $total_dept = mysqli_query($conn , $select_dept);
+            $total_applied = mysqli_num_rows($result);
 
-        // total employee
-         $select_emp = "SELECT * FROM employee order by salary";
-         $total_emp = mysqli_query($conn , $select_emp);
+            while( $leave_info = mysqli_fetch_assoc($result) ){
+                // fetching status 
+                $status = $leave_info["status"];
 
-        // employee on leave
-        $emp_leave  ="SELECT * FROM emp_leave";
-        $total_leaves = mysqli_query($conn , $emp_leave);
-
-        if( mysqli_num_rows($total_leaves) > 0 ){
-            while( $leave = mysqli_fetch_assoc($total_leaves) ){
-                $leave = $leave["start_date"];
-
-                //daywise
-                if($currentDay == $leave){
-                    $today_leave += 1;
-                }elseif($tomorrow == $leave){
-                   $tomorrow_leave += 1;
+                if( $status == "pending" ){
+                    $total_pending += 1;
+                }elseif( $status == "Accepted" ){
+                    $total_accepted += 1;
+                }elseif( $status = "Canceled"){
+                    $total_canceled += 1;
                 }
-
-
             }
-        }else {
-            // echo "No leave found";
+        }else{
+            $total_accepted = $total_pending = $total_canceled = $total_applied = 0;
         }
 
-        $sql_highest_salary =  "SELECT * FROM employee ORDER BY salary DESC";
-        $emp_ = mysqli_query($conn , $sql_highest_salary);
+        // leave status
+        $currentDay = date( 'Y-m-d', strtotime("today") );
+
+        $last_leave_status = "No leave applied";
+        $upcoming_leave_status = "";
+
+        // for last leave status
+        $check_leave = "SELECT * FROM emp_leave WHERE email = '$_SESSION[email_emp]' ";
+        $s = mysqli_query($conn , $check_leave);
+        if( mysqli_num_rows($s) > 0 ){
+            while( $info = mysqli_fetch_assoc($s) ){
+               $last_leave_status =  $info["status"] ;
+            }
+        }
+
+
+    // for next leave date
+    $check_ = "SELECT * FROM emp_leave WHERE email = '$_SESSION[email_emp]' ORDER BY start_date ASC ";
+    $e = mysqli_query($conn , $check_); 
+    if( mysqli_num_rows($e) > 0 ){
+        while( $info = mysqli_fetch_assoc($e) ){
+            $date = $info["start_date"] ;
+            $last_leave =  $info["status"] ;
+           if ( $date > $currentDay && $last_leave == "Accepted" ){
+               $upcoming_leave_status = date('jS F', strtotime($date) ) ;
+               break;
+           }
+        }
+    }
+
+
+    // display emp detail
+        $session_email =  $_SESSION["email_emp"];
+        $sql2 =  "SELECT ename,dname FROM employee E,department D WHERE  E.dnum = D.dnum AND email= '$session_email'";
+        $result2 = mysqli_query($conn , $sql2);
+        $rows = mysqli_fetch_assoc($result2);
+        $dnum = $rows["dname"];
+
+        $session_email =  $_SESSION["email_emp"];
+        $sql1 = "SELECT * FROM employee WHERE email= '$session_email' ";
+        $result1 = mysqli_query($conn , $sql1);
+        $rows = mysqli_fetch_assoc($result1);
+        $jobs = $rows["job"];
+ 
+        $session_email =  $_SESSION["email_emp"];
+        $sql = "SELECT * FROM employee WHERE email= '$session_email' ";
+        $result = mysqli_query($conn , $sql);
+
 
 ?>
 
 <div class="container-fluid">
-
     <div class="row">
+        <!-- sets margin top 5 -->
+    <div class="row mt-5"> 
         <div class="col-lg-4">
-            <div class="container-fluid card shadow " style="width: 18rem;">
+            <div class="card shadow container-fluid" style="width: 18rem;">
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item text-center"><b>Department</b></li>
-                    <li class="list-group-item">Total departments : <?php echo mysqli_num_rows($total_dept); ?> </li>
-                    <li class="list-group-item text-center"><a href="manage-dept.php"><b>View All Departments</b></a></li>
+                    <li class="list-group-item text-center"> <b>Designation</b> </li>
+                    <li class="list-group-item text-center"> <?php echo  $jobs ; ?>  </li>
                 </ul>
             </div>
         </div>
         <div class="col-lg-4">
-            <div class="container-fluid card shadow " style="width: 18rem;">
+            <div class="card shadow container-fluid" style="width: 18rem;">
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item text-center"><b>Employees</b></li>
-                    <li class="list-group-item">Total Employees : <?php echo mysqli_num_rows($total_emp); ?></li>
-                    <li class="list-group-item text-center"><a href="manage-employee.php"> <b>View All Employees</b></a></li>
+                    <li class="list-group-item text-center"> <b>Applied leaves</b> </li>
+                    <li class="list-group-item">Total Accepted  : <?php echo $total_accepted;  ?> </li>
+                    <li class="list-group-item">Total Cancelled  : <?php echo $total_canceled; ?> </li>
+                    <li class="list-group-item">Total Pending  : <?php echo $total_pending; ?> </li>
+                    <li class="list-group-item">Total Applied  : <?php echo $total_applied; ?> </li>
                 </ul>
             </div>
         </div>
-
         <div class="col-lg-4">
-            <div class="container-fluid card shadow " style="width:18rem;">
+            <div class="card shadow container-fluid" style="width: 18rem;">
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item text-center"><b>Employees on Leave(Daywise)</b></li>
-                    <li class="list-group-item">Today :  <?php echo $today_leave; ?>  </li>
-                    <li class="list-group-item">Tomorrow :  <?php echo $tomorrow_leave; ?> </li>
-                    <li class="list-group-item text-center"><a href="manage-leave.php"> <b>View leave</b></a></li>
+                    <li class="list-group-item text-center"> <b>Department Name</b>  </li>
+                    <li class="list-group-item text-center"><?php echo ($dnum); ?></li>
                 </ul>
             </div>
         </div>
-
-        <div class="col-lg-4">
-            <div class="container-fluid card shadow " style="width: 18rem;">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item text-center"><b>Production data(Monthly wise)</b></li>
-                    <li class="list-group-item">Month : <?php echo "December"; ?></li>
-                    <li class="list-group-item">Production(in tonnes) : <?php echo "20000"; ?></li>
-                    <li class="list-group-item">Waste(in tonnes) : <?php echo "29000"; ?></li>
-                    <li class="list-group-item text-center"><a href="minesdata.php"> <b>View All Data</b></a></li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="container-fluid card shadow " style="width: 18rem;">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item text-center"><b>Sales data(Monthly wise)</b></li>
-                    <li class="list-group-item">Month : <?php echo "December"; ?></li>
-                    <li class="list-group-item">Domestic Market (in Tonnes) : <?php echo "18000"; ?></li>
-                    <li class="list-group-item">Waste (in tonnes) : <?php echo "11000"; ?></li>
-                    <li class="list-group-item text-center"><a href="salesdata.php"> <b>View All Data</b></a></li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="container-fluid card shadow " style="width: 18rem;">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item text-center"><b>Finance data(Monthly wise)</b></li>
-                    <li class="list-group-item">Month : <?php echo "December"; ?></li>
-                    <li class="list-group-item">Expenses : <?php echo "2800000"; ?></li>
-                    <li class="list-group-item">Revenue : <?php echo "72500000"; ?></li>
-                    <li class="list-group-item text-center"><a href="financedata.php"> <b>View All Data</b></a></li>
-                </ul>
-            </div>
         </div>
     </div>
-    
-
-    <div class="container-fluid">
-    <div class="container row bg-white shadow "> 
-    <div class="col ms-auto">
-            <div class=" text-center my-3 "> <h4>Employee Board</h4> </div>
-            <table class="table table-responsive-lg table-bordered table-hover text-center">
+    <div class="row mt-5 bg-white shadow "> 
+    <div class="col-12">
+            <div class=" text-center my-3 "> <h4>Details of the Employee</h4> </div>
+            <table class="table table-responsive table-bordered table-hover">
         <thead>
             <tr class="bg-dark">
-            <th scope="col">Serial.No.</th>
-            <th scope="col">Employee Id</th>
-            <th scope="col">Employee Name</th>
-            <th scope="col">Employee Email</th>
-            <th scope="col">Designation</th>
-            <th scope="col">Salary</th>
+            <th>S.No.</t>
+            <th>Employee Id</t>
+            <th>Employee Name</t>
+            <th>Employee Email</t>
+            <th>Gender</t>
+            <th>Date of birth</t>
+            <th>Age</t>
+            <th>Hire Date</t>
+            <th>Designation</t>
+            <th>Salary</t>
+            <th>Address</th>
             </tr>
         </thead>
         <tbody>
-        <?php while( $emp_info = mysqli_fetch_assoc($emp_) ){
-                    $emp_id = $emp_info["eid"];
-                    $emp_name = $emp_info["ename"];
-                    $emp_email = $emp_info["email"];
-                    $emp_job = $emp_info["job"];
-                    $emp_salary = $emp_info["salary"];
-                    ?>
-            <tr>
-            <th ><?php echo $i; ?></th>
-            <th ><?php echo $emp_id; ?></th>
-            <td><?php echo $emp_name; ?></td>
-            <td><?php echo $emp_email; ?></td>
-            <td><?php echo $emp_job; ?></td>
-            <td><?php echo $emp_salary; ?></td>
-            </tr>
+        <?php  
+        if( mysqli_num_rows($result) > 0){
+        while( $rows = mysqli_fetch_assoc($result) ){
+            $name= $rows["ename"];
+            $email= $rows["email"];
+            $dob = $rows["dob"];
+            $gender = $rows["gender"];
+            $id = $rows["eid"];
+            $salary = $rows["salary"];
+            
+            $dob = date('jS F, Y' , strtotime($dob));
+            $date1=date_create($dob);
+            $date2=date_create("now");
+            $diff=date_diff($date1,$date2);
+            $age = $diff->format("%Y"); 
+            
+            $jobs = $rows["job"];
+  
+            $address = $rows["addresses"];
+            $hire = $rows["hiredate"];
+            ?>
+        <tr>
+        <td><?php echo $i; ?></td>
+        <td><?php echo $id; ?></td>
+        <td><?php echo $name ; ?></td>
+        <td><?php echo $email; ?></td>
+        <td><?php echo $gender; ?></td>
+        <td><?php echo $dob; ?></td>
+        <td><?php echo $age; ?></td>
+        <td><?php echo $hire; ?></td>
+        <td><?php echo $jobs; ?></td>
+        <td><?php echo $salary; ?></td>
+        <td><?php echo $address;?></td>
 
           <?php  
           $i++; 
                 } 
-            ?>
+            }
+        ?>
         </tbody>
         </table>
-        </div>
-    </div>
     </div>
     </div>
 </div>
